@@ -1,0 +1,45 @@
+---
+#- name: Common
+- hosts: "all"
+  user: "{{ hostvar['bootstrap_user'] }}"
+  become: true
+  handlers:
+    - name: Restart ssh
+      service:
+        name: ssh
+        state: restarted
+  tasks:
+    - name: Make sure wheel exists
+      group:
+        name: wheel
+        state: present
+    - name: Create common user
+      user:
+        name: smith
+        state: present
+        comment: Agent
+        groups: wheel
+    - name: Ensure smith has key
+      authorized_key:
+        user: smith
+        state: present
+        key: "{{ lookup('file', '/home/eman/.ssh/id_rsa.pub') }}"
+    - name: Allow wheel group passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    - name: Disallow root ssh access
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
+        state: present
+      notify: Restart ssh 
+    - name: Update and Upgrade
+      apt: 
+        update_cache: yes
+        cache_valid_time: 3600
+        upgrade: safe
+

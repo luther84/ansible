@@ -1,0 +1,21 @@
+---
+# - name: bootstrap
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    - name: "bootstrap_user_prompt"
+      prompt: "Enter username to bootstrap with"
+      default: "root"
+  tasks:  
+    - name: Set fact to hostvar
+      set_fact: 
+        bootstrap_user: "{{ bootstrap_user_prompt }}"
+
+- hosts: "{{ target }}"
+  gather_facts: false
+  remote_user: "{{ user }}"
+  tasks:
+    - name: Install deps
+      raw: apt-get update && apt-get install -y python-simplejson
+ 
+- import_playbook: common.yml
