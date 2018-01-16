@@ -1,7 +1,9 @@
 ---
 #- name: Common
-- hosts: "all"
-  user: "{{ hostvar['bootstrap_user'] }}"
+#- hosts: "{{ hostvar['localhost']['bootstrap_target'] }}"
+#  user: "{{ hostvar['localhost']['bootstrap_user'] }}"
+- hosts: ha
+  user: root
   become: true
   handlers:
     - name: Restart ssh
@@ -19,11 +21,12 @@
         state: present
         comment: Agent
         groups: wheel
+        shell: /bin/bash
     - name: Ensure smith has key
       authorized_key:
         user: smith
         state: present
-        key: "{{ lookup('file', '/home/eman/.ssh/id_rsa.pub') }}"
+        key: "{{ lookup('file', '/home/eman/.ssh/smith_id_rsa.pub') }}"
     - name: Allow wheel group passwordless sudo
       lineinfile:
         dest: /etc/sudoers

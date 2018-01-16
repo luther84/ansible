@@ -6,16 +6,19 @@
     - name: "bootstrap_user_prompt"
       prompt: "Enter username to bootstrap with"
       default: "root"
+    - name: "bootstrap_target_prompt"
+      prompt: "Enter target to bootstrap"
   tasks:  
     - name: Set fact to hostvar
       set_fact: 
         bootstrap_user: "{{ bootstrap_user_prompt }}"
+        bootstrap_target: "{{ bootstrap_target_prompt }}"
 
-- hosts: "{{ target }}"
+- hosts: "{{ hostvars['localhost']['bootstrap_target'] }}"
   gather_facts: false
-  remote_user: "{{ user }}"
+  remote_user: "{{ hostvars['localhost']['bootstrap_user'] }}"
   tasks:
     - name: Install deps
       raw: apt-get update && apt-get install -y python-simplejson
- 
-- import_playbook: common.yml
+    - import_playbook: 
+        name: common.yml

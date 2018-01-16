@@ -1,0 +1,14 @@
+[Unit]
+Description=Factorio Server
+After=network.target
+
+[Service]
+Type=simple
+User=factorio
+Group=factorio
+WorkingDirectory=/opt/factorio/bin/x64
+ExecStart=/opt/factorio/bin/x64/factorio --start-server dune.zip --server-settings server-settings.json
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

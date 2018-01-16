@@ -1,0 +1,67 @@
+---
+- hosts: factorio
+  remote_user: smith
+  become: true
+  vars_prompt:
+    name: "factorio_version"
+    prompt: "Enter factorio version"
+    default: "16.16"
+
+  tasks:
+    - name: Create my admin account
+      user:
+        name: eman
+        state: present
+        comment: admin
+        groups: wheel
+        shell: /bin/bash
+    - name: Ensure admin account has key
+      authorized_key:
+        user: eman
+        state: present
+        key: "{{ lookup('file', '/home/eman/.ssh/id_rsa.pub') }}"
+    - name: Create factorio service account
+      user:
+        name: factorio
+        state: present
+        comment: service
+        createhome: no
+        system: yes
+    - name: Download Factorio server
+      get_url:
+        url: https://www.factorio.com/get-download/0.{{factorio_version}}/headless/linux64
+        dest: /tmp/factorio_headless_x64.tar.xz
+    - name: Check for existence of server package
+      stat:
+        path: /tmp/factorio_headless_x64.tar.xz
+      register: p
+    - name: Untar if it exists
+      raw: cd /opt/ && sudo tar -xf /tmp/factorio_headless_x64.tar.xz  
+      when: p.stat.exists == True
+    - name: Move server conf over
+      copy:
+        src: server-settings.json
+        dest: /opt/factorio/bin/x64/server-settings.json
+        mode: 0744
+    - name: Ensure service account owns files
+      file:
+        dest: /opt/factorio
+        owner: factorio
+        group: factorio
+        recurse: yes
+    - name: Create unit file
+      template:
+        src: factorio.service
+        dest: /lib/systemd/system/factorio.service
+        mode: 0644
+      notify: reload systemctl
+    - name: Start/restart Factorio
+      service:
+        name: factorio.service
+        state: started
+        enabled: yes
+  handlers:
+    - name: reload systemctl
+      command: systemctl daemon-reload
+
+
